@@ -349,6 +349,51 @@ export default createAdapter;
 
 A missing module, a bad factory, or a throwing adapter all degrade to noop — telemetry can never stop the bridge from starting or break logging.
 
+## Project-memory integration
+
+This branch is derived from zarazhangrui/lark-coding-agent-bridge at upstream
+commit ec57a8851b172978eddd329757f813954bcb2294. The upstream LICENSE is
+retained; this repository does not claim the upstream work as original.
+
+Phase 1 adds semantic project routing before the existing queue and Codex CLI
+adapter. Set LARK_PROJECT_ROOTS to explicit, narrow project roots such as
+D:\\PROJECT_ROOT_1;D:\\PROJECT_ROOT_2; the resolver never scans an entire drive or home
+directory by default. The memory file is stored at
+%USERPROFILE%\\.lark-channel\\project-memory.json and contains project
+metadata and learned aliases, not credentials.
+
+Phase 1 capabilities are locally verified only: automatic high-confidence
+routing, candidate confirmation, cancellation without execution, cwd switching,
+session clearing, alias persistence, slash-command bypass, and topic-scope reply
+routing. Real Windows service and Feishu acceptance remain separate gates.
+
+The cc-connect/App Server path is Phase 2 and remains disabled by default. It
+must not replace the stable Codex CLI path until registration, progress,
+approval, reconnect, timeout, fallback, and project-session isolation have real
+evidence.
+
+## Windows rollout and rollback
+
+Install dependencies with pnpm install --frozen-lockfile, then run pnpm
+typecheck, pnpm test, and pnpm build. Apply the additive integration with
+scripts/apply-to-lark-bridge.mjs <checkout> --dry-run before applying it. The
+script validates the package name and unique anchors, and writes an original
+src/bot/channel.ts backup under .kv-fusion-backup/ before changing the file.
+Do not run two consumers for the same Feishu App. Configure and test the
+foreground profile before using the existing OS-managed service.
+
+To roll back, stop the deployed profile, remove the added project-memory and
+routing-hook files, and restore the timestamped channel.ts backup. This
+repository does not contain Feishu credentials, Codex auth, cc-connect tokens,
+cookies, or local profile state.
+
+## Public repository security
+
+Users must configure their own Feishu credentials locally. Secrets belong in the
+encrypted local keystore or environment/provider configuration and must never be
+placed in commits, fixtures, logs, or Feishu messages. Test fixtures use synthetic
+project names and paths.
+
 ## License
 
 [MIT](./LICENSE)

@@ -52,6 +52,11 @@ import { RunExecutor } from '../runtime/run-executor';
 import type { SessionCatalog } from '../session/catalog';
 import type { SessionStore } from '../session/store';
 import type { WorkspaceStore } from '../workspace/store';
+import {
+  createProjectRoutingControllerFromEnv,
+  type ProjectRoutingController,
+} from '../project-memory';
+import { applyProjectRouting } from '../integration/lark-project-routing-hook';
 import { ActiveRuns, type RunHandle } from './active-runs';
 import { ChatModeCache, type ChatMode } from './chat-mode-cache';
 import { handleCommentMention } from './comments';
@@ -176,10 +181,13 @@ export interface StartChannelDeps {
   workspaces: WorkspaceStore;
   controls: Controls;
   appPaths?: Pick<AppPaths, 'secretsFile' | 'keystoreSaltFile' | 'mediaDir'>;
+  projectRouting?: ProjectRoutingController;
 }
 
 export async function startChannel(deps: StartChannelDeps): Promise<BridgeChannel> {
   const { cfg, agent, sessions, sessionCatalog, workspaces, controls } = deps;
+  const projectRouting =
+    deps.projectRouting ?? (await createProjectRoutingControllerFromEnv());
   const activeRuns = new ActiveRuns();
   // ChatModeCache stays per-bridge-instance — invalidated on restart along
   // with everything else. Topic-mode chats only need one chat.get() call ever.
@@ -346,6 +354,7 @@ export async function startChannel(deps: StartChannelDeps): Promise<BridgeChanne
           logThreadModeOverride,
           executor,
           pool,
+          projectRouting,
         }),
       ).catch((err) => log.fail('intake', err));
     },
@@ -577,6 +586,7 @@ interface IntakeDeps {
   logThreadModeOverride: LogThreadModeOverride;
   executor: RunExecutor;
   pool: ProcessPool;
+  projectRouting?: ProjectRoutingController;
 }
 
 type LogThreadModeOverride = (input: {
@@ -600,6 +610,7 @@ async function intakeMessage(deps: IntakeDeps): Promise<void> {
     logThreadModeOverride,
     executor,
     pool,
+    projectRouting,
   } = deps;
   const preview = msg.content.length > 80 ? `${msg.content.slice(0, 80)}…` : msg.content;
   // Resolve scope (and underlying chat mode) once at intake — every
@@ -626,7 +637,7 @@ async function intakeMessage(deps: IntakeDeps): Promise<void> {
   // Carry the (possibly backfilled) threadId on the message so the batched
   // flush — which reads `firstMsg.threadId` for reply routing and topic scope —
   // sees it.
-  const emsg: NormalizedMessage = threadId === msg.threadId ? msg : { ...msg, threadId };
+  let emsg: NormalizedMessage = threadId === msg.threadId ? msg : { ...msg, threadId };
   // Some groups are converted into topic groups after creation. In that state
   // getChatMode can lag behind the message event shape, so threadId is the
   // stronger signal for topic-scoped sessions and reply routing.
@@ -734,6 +745,22 @@ async function intakeMessage(deps: IntakeDeps): Promise<void> {
     log.info('intake', 'command', { scope, droppedPending: dropped.length });
     return;
   }
+
+  const projectRoute = await applyProjectRouting({
+    controller: projectRouting,
+    scope,
+    message: emsg,
+    chatMode,
+    workspaces,
+    sessions,
+    channel,
+    recentPaths: Object.values(workspaces.listCwds()).reverse(),
+  });
+  if (projectRoute.kind === 'handled') {
+    pending.cancel(scope);
+    return;
+  }
+  emsg = projectRoute.message;
 
   const size = pending.push(scope, emsg);
   log.info('intake', 'queued', { scope, queueSize: size, debounceMs: DEBOUNCE_MS });
