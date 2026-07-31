@@ -18,13 +18,14 @@
 - Full target suite: 633 pass / 6 baseline failures.
 - Clean upstream baseline at the same commit: 616 pass / 6 failures in the same two test files; the branch adds 17 passing routing tests.
 - Foreground runtime: registry/lock metadata match one live `codex` profile process; the current JSONL log records `ws connected`, `profile-online`, `chats-fetched`, and `reconnected`.
+- GitHub Actions at `aa83d613`: Ubuntu and macOS passed; Windows failed in the existing `launchd-autostart.test.ts` `gui/-1` assertions before typecheck/build.
 
 ## Not yet verified
 
 - Real Windows profile startup or service migration.
 - Real phone Feishu round trip.
 - Real cc-connect Bridge WebSocket integration.
-- CI result.
+- CI is not green: Ubuntu/macOS passed, Windows has the known launchd baseline failure above.
 - OS-managed service registration and release.
 
 ## Safety and rollback

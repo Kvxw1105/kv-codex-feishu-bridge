@@ -18,6 +18,7 @@
 | Full target `pnpm test` | 633 pass / 6 fail |
 | Clean upstream full `pnpm test` | 616 pass / 6 fail, same 2 files |
 | `git diff --check` and public-tree secret scan | exit 0; `gitleaks` unavailable, fallback scan found only examples, field names, and fixtures |
+| GitHub Actions CI at `aa83d613` | Ubuntu and macOS pass; Windows fails in 3 existing `launchd-autostart.test.ts` assertions using `gui/-1` |
 
 ## Runtime evidence
 
@@ -43,4 +44,4 @@
 - Target profile foreground startup with a backup of real configuration has been observed; repeatable phone confirmation is still pending.
 - Windows service/task migration and single-consumer check.
 - Phone Feishu tests for automatic routing, ambiguity, selection, cancellation, alias persistence, `/status`, and safe write fixture.
-- CI and Draft PR review.
+- Resolve the known Windows CI baseline failure and complete Draft PR review.

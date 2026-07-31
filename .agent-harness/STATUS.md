@@ -30,5 +30,5 @@ IMPLEMENT -> VERIFY -> HANDOFF
 - COMMITTED: yes, functional startup fix `5bf49e9` plus the follow-up handoff documentation commit
 - PUSHED: not yet verified at the time of this record
 - PR_UPDATED: not yet verified at the time of this record
-- CI_PASSED: no
+- CI_PASSED: no; Ubuntu and macOS passed, Windows failed in the known launchd environment tests
 - RELEASED: no
