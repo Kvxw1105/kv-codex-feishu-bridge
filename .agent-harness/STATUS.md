@@ -14,7 +14,7 @@ IMPLEMENT -> VERIFY -> HANDOFF
 - OBSERVED: Full target test result is 633 passed / 6 failed across 102 files. A clean upstream worktree at the same SHA has 616 passed / 6 failed across 98 files; the difference is the 17 new routing tests. The six failures remain the known Codex legacy-binary and launchd environment tests.
 - OBSERVED: The current foreground profile runtime is `profile=codex`, version `0.6.4`, launched with `run --profile codex --skip-check-lark-cli`. The registry and both runtime-lock metadata files identify the same live process.
 - OBSERVED: The current profile JSONL log records `ws connected`, `profile-online`, `chats-fetched`, and a later `reconnected` event after startup.
-- OBSERVED: No OS-managed service/task registration was performed in this pass; the live process is foreground-only.
+- OBSERVED: No OS-managed service/task for this repository was registered in this pass; the live process is foreground-only. A pre-existing cc-connect helper logon task is separate and was left untouched.
 - BLOCKED: Real phone Feishu round trip, service/task migration, CI, and release acceptance require their respective external steps and have not been completed.
 
 ## PROTECTED

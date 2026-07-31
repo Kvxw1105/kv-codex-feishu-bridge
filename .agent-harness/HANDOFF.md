@@ -8,8 +8,9 @@ contains the runtime evidence and verification updates below. The current
 foreground profile was observed online from the built CLI with
 `run --profile codex --skip-check-lark-cli`, and its JSONL log recorded
 `ws connected`, `profile-online`, `chats-fetched`, and `reconnected`.
-It is not registered as an OS-managed service, not released, and does not claim
-phone Feishu acceptance.
+It is not registered as this repository's OS-managed service, not released, and
+does not claim phone Feishu acceptance. A pre-existing cc-connect helper logon
+task remains outside this branch and was not modified.
 
 ## Rollback
 

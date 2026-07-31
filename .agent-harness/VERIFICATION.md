@@ -24,7 +24,7 @@
 - Foreground process command line includes `dist/cli.js run --profile codex --skip-check-lark-cli`.
 - The registry entry and profile/app runtime-lock metadata agree on the active profile and process; no second consumer was observed.
 - The current profile JSONL log records `ws connected`, `profile-online`, `chats-fetched`, and `reconnected` after startup.
-- The process is not registered as an OS-managed service/task. This is foreground runtime evidence, not service migration or release evidence.
+- No OS-managed service/task for this repository was registered. A pre-existing cc-connect helper logon task is separate and untouched. This is foreground runtime evidence, not service migration or release evidence.
 
 ## Focused coverage
 
