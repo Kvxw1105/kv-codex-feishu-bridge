@@ -2,9 +2,14 @@
 
 ## Current endpoint
 
-The implementation is locally reviewable on branch `codex/project-memory-mvp` at
-commit `47f71cc765797e0615c8e25f899a9f1bc61f92d7`.
-It is not deployed and does not claim real Feishu acceptance.
+The implementation is locally reviewable on branch `codex/project-memory-mvp`.
+The functional startup fix is commit `5bf49e9`; the follow-up handoff commit
+contains the runtime evidence and verification updates below. The current
+foreground profile was observed online from the built CLI with
+`run --profile codex --skip-check-lark-cli`, and its JSONL log recorded
+`ws connected`, `profile-online`, `chats-fetched`, and `reconnected`.
+It is not registered as an OS-managed service, not released, and does not claim
+phone Feishu acceptance.
 
 ## Rollback
 
@@ -15,8 +20,8 @@ The backup directory is ignored and must not be committed.
 
 ## Next steps
 
-1. Review the explicit staged file list and public security scan.
-2. Commit and push `codex/project-memory-mvp`; create a Draft PR without merging.
-3. Back up the real profile/task state outside the repository before any deployment action.
-4. Run foreground acceptance and have the user perform the phone Feishu test matrix.
+1. Push `codex/project-memory-mvp` and update Draft PR #1 with this handoff evidence.
+2. Back up the real profile/task state outside the repository before any service migration action.
+3. Have the user perform the phone Feishu matrix: read-only routing, ambiguity selection, cancellation, `/status`, alias persistence after restart, and the safe-write fixture.
+4. Register an OS-managed service only after the foreground and phone checks pass; verify one consumer and rollback evidence.
 5. Only after Phase 1 evidence decide whether to implement Phase 2.

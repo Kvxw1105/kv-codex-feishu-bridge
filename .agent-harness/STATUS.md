@@ -9,9 +9,13 @@ IMPLEMENT -> VERIFY -> HANDOFF
 - OBSERVED: Repository is `TARGET_REPO`, branch `codex/project-memory-mvp`, based on upstream `ec57a8851b172978eddd329757f813954bcb2294`.
 - OBSERVED: `origin` is `https://github.com/Kvxw1105/kv-codex-feishu-bridge.git`; `upstream` is `https://github.com/zarazhangrui/lark-coding-agent-bridge.git`.
 - OBSERVED: Phase 1 project-memory routing is applied with a timestamped `channel.ts` backup.
-- OBSERVED: Target `pnpm typecheck` and `pnpm build` pass; focused project-memory coverage is 17/17.
-- OBSERVED: Full target test result is 633 passed / 6 failed across 102 files. A clean upstream worktree at the same SHA has 616 passed / 6 failed across 98 files; the difference is the 17 new routing tests.
-- BLOCKED: Real Windows profile restart and phone Feishu round trip require external acceptance; they have not been run.
+- OBSERVED: Startup fix commit `5bf49e9` preserves `--skip-check-lark-cli` for foreground and installed-service launches, and the matching service tests pass.
+- OBSERVED: `pnpm typecheck` and `pnpm build` pass; focused service coverage is 11/11 and focused project-memory coverage is 17/17.
+- OBSERVED: Full target test result is 633 passed / 6 failed across 102 files. A clean upstream worktree at the same SHA has 616 passed / 6 failed across 98 files; the difference is the 17 new routing tests. The six failures remain the known Codex legacy-binary and launchd environment tests.
+- OBSERVED: The current foreground profile runtime is `profile=codex`, version `0.6.4`, launched with `run --profile codex --skip-check-lark-cli`. The registry and both runtime-lock metadata files identify the same live process.
+- OBSERVED: The current profile JSONL log records `ws connected`, `profile-online`, `chats-fetched`, and a later `reconnected` event after startup.
+- OBSERVED: No OS-managed service/task registration was performed in this pass; the live process is foreground-only.
+- BLOCKED: Real phone Feishu round trip, service/task migration, CI, and release acceptance require their respective external steps and have not been completed.
 
 ## PROTECTED
 
@@ -21,10 +25,10 @@ IMPLEMENT -> VERIFY -> HANDOFF
 
 ## GIT STATUS
 
-- EDITED: yes
-- LOCALLY_VERIFIED: typecheck, build, focused routing tests, dry-run/apply and baseline comparison
-- COMMITTED: yes, `47f71cc765797e0615c8e25f899a9f1bc61f92d7`
-- PUSHED: no
-- PR_UPDATED: no
+- EDITED: no after the follow-up handoff commit
+- LOCALLY_VERIFIED: typecheck, build, focused service/routing tests, full-suite baseline comparison, runtime logs, registry, and lock metadata
+- COMMITTED: yes, functional startup fix `5bf49e9` plus the follow-up handoff documentation commit
+- PUSHED: not yet verified at the time of this record
+- PR_UPDATED: not yet verified at the time of this record
 - CI_PASSED: no
 - RELEASED: no
