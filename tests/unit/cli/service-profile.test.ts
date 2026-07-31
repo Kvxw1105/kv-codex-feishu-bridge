@@ -135,7 +135,12 @@ describe('profile-aware service commands', () => {
     await runServiceStart({ profile: 'codex-dev', skipCheckLarkCli: true });
 
     // Classic per-profile service pins `run --profile <profile>`.
-    expect(mocks.getServiceAdapter).toHaveBeenCalledWith('codex-dev', ['run', '--profile', 'codex-dev']);
+    expect(mocks.getServiceAdapter).toHaveBeenCalledWith('codex-dev', [
+      'run',
+      '--profile',
+      'codex-dev',
+      '--skip-check-lark-cli',
+    ]);
     expect(mocks.resolveProfileRuntime).toHaveBeenNthCalledWith(1, expect.objectContaining({
       profile: 'codex-dev',
       agent: undefined,
@@ -470,7 +475,12 @@ describe('profile-aware service commands', () => {
       profile: 'claude',
       allowBootstrap: false,
     });
-    expect(mocks.getServiceAdapter).toHaveBeenCalledWith('claude', ['run', '--profile', 'claude']);
+    expect(mocks.getServiceAdapter).toHaveBeenCalledWith('claude', [
+      'run',
+      '--profile',
+      'claude',
+      '--skip-check-lark-cli',
+    ]);
     expect(mocks.materializeEnvSecretForService).toHaveBeenCalledWith({ profile: 'claude' });
     expect(mocks.adapter.install).toHaveBeenCalled();
     expect(mocks.adapter.start).toHaveBeenCalled();

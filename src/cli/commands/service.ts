@@ -42,12 +42,14 @@ export interface ServiceProfileOptions {
 
 /** CLI args a classic per-profile daemon launches with. Pinning `--profile`
  * keeps the service tied to its profile even if the active profile changes. */
-function classicRunArgs(profile: string): string[] {
-  return ['run', '--profile', profile];
+function classicRunArgs(profile: string, skipCheckLarkCli = false): string[] {
+  return ['run', '--profile', profile, ...(skipCheckLarkCli ? ['--skip-check-lark-cli'] : [])];
 }
 
 /** CLI args the supervisor+console daemon launches with. */
-const WEB_UI_RUN_ARGS = ['run', '--web-ui'];
+function webUiRunArgs(skipCheckLarkCli = false): string[] {
+  return ['run', '--web-ui', ...(skipCheckLarkCli ? ['--skip-check-lark-cli'] : [])];
+}
 
 /**
  * Resolve which OS service a lifecycle command (stop/restart/status/unregister)
@@ -325,7 +327,7 @@ export async function runServiceStart(opts: ServiceStartOptions = {}): Promise<v
     return;
   }
   const { profile, cfg, profileConfig, appPaths, configPath } = await ensureBridgeConfigured(opts);
-  const adapter = requireAdapter('start', profile, classicRunArgs(profile));
+  const adapter = requireAdapter('start', profile, classicRunArgs(profile, opts.skipCheckLarkCli));
   await assertLockNotHeldByAnotherRuntime('profile', appPaths.profileLockFile, adapter, opts);
   await assertLockNotHeldByAnotherRuntime('app', appPaths.appLockFile(cfg.accounts.app.id), adapter, opts);
   const materializedEnvSecret = await materializeEnvSecretForService({ profile });
@@ -387,7 +389,7 @@ export async function runServiceStart(opts: ServiceStartOptions = {}): Promise<v
  */
 async function runServiceStartWebUi(opts: ServiceStartOptions): Promise<void> {
   const { profile, cfg, profileConfig, appPaths, configPath } = await ensureBridgeConfigured(opts);
-  const adapter = requireAdapter('start', SUPERVISOR_SERVICE_ID, WEB_UI_RUN_ARGS);
+  const adapter = requireAdapter('start', SUPERVISOR_SERVICE_ID, webUiRunArgs(opts.skipCheckLarkCli));
   await materializeEnvSecretForService({ profile });
   const bridgeConfig = (await resolveProfileRuntime({ profile, allowBootstrap: false })).cfg;
 
@@ -491,7 +493,7 @@ export async function runServiceRestart(opts: ServiceProfileOptions = {}): Promi
   const adapter = requireAdapter(
     'restart',
     serviceId,
-    webUi ? WEB_UI_RUN_ARGS : classicRunArgs(serviceId),
+    webUi ? webUiRunArgs() : classicRunArgs(serviceId),
   );
   if (!adapter.fileExists()) {
     console.error(
