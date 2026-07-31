@@ -2,7 +2,8 @@
 
 ## Current endpoint
 
-The implementation is locally reviewable on branch `codex/project-memory-mvp`.
+The implementation is locally reviewable on branch `codex/project-memory-mvp` at
+commit `47f71cc765797e0615c8e25f899a9f1bc61f92d7`.
 It is not deployed and does not claim real Feishu acceptance.
 
 ## Rollback

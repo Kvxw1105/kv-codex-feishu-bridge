@@ -9,6 +9,7 @@
 | Bundle `npm run ci` | exit 0 |
 | Apply script dry-run | exit 0 after CRLF and upstream blank-line compatibility fixes |
 | Apply script apply | exit 0; backup created |
+| Disposable applied worktree typecheck | exit 0 |
 | `pnpm install --frozen-lockfile` | exit 0 after low-concurrency retry; lockfile unchanged |
 | `pnpm typecheck` | exit 0 |
 | Focused project-memory Vitest | 17/17 pass |

@@ -23,7 +23,7 @@ IMPLEMENT -> VERIFY -> HANDOFF
 
 - EDITED: yes
 - LOCALLY_VERIFIED: typecheck, build, focused routing tests, dry-run/apply and baseline comparison
-- COMMITTED: pending final staged review
+- COMMITTED: yes, `47f71cc765797e0615c8e25f899a9f1bc61f92d7`
 - PUSHED: no
 - PR_UPDATED: no
 - CI_PASSED: no
