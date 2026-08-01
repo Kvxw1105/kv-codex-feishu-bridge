@@ -56,9 +56,10 @@ export class ProjectResolver {
     const hasExplicitAlias = projects.some((project) =>
       project.aliases.some((alias) => aliasMatches(normalizedQuery, alias)),
     );
+    const hasGenericBridgeReference = queryTokens.includes('bridge') && !hasExplicitAlias;
     const likelySwitch = SWITCH_SIGNAL.test(normalizedQuery) || hasExplicitAlias;
 
-    if (current && FOLLOW_UP.test(normalizedQuery) && !likelySwitch) {
+    if (current && FOLLOW_UP.test(normalizedQuery) && !likelySwitch && !hasGenericBridgeReference) {
       return {
         kind: 'current',
         project: current,
@@ -97,6 +98,14 @@ export class ProjectResolver {
         project: current,
         candidates,
         reason: 'message looks task-focused rather than project-switching',
+      };
+    }
+
+    if (hasGenericBridgeReference && candidates.length > 1) {
+      return {
+        kind: 'confirm',
+        candidates,
+        reason: `generic bridge wording has multiple logical matches (${top.score}, margin ${margin})`,
       };
     }
 

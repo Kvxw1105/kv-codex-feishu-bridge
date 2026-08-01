@@ -51,6 +51,42 @@ test('asks for confirmation when bridge wording is ambiguous', () => {
   }
 });
 
+test('keeps generic bridge wording confirmatory despite a dominant score', () => {
+  const dominant = {
+    ...SAMPLE_PROJECTS[4]!,
+    name: 'lark-channel-bridge',
+    aliases: ['lark-channel-bridge'],
+    lastActiveAt: NOW,
+  };
+  const staleOther = {
+    ...SAMPLE_PROJECTS[3]!,
+    lastActiveAt: NOW - 7 * 24 * 60 * 60 * 1000,
+  };
+  const resolverWithDominantMatch = new ProjectResolver(() => [dominant, staleOther], {
+    autoThreshold: 40,
+    confirmThreshold: 18,
+    autoMargin: 12,
+  });
+
+  const result = resolverWithDominantMatch.resolve('看看那个 bridge 最近还有什么问题', { now: NOW });
+  assert.equal(result.kind, 'confirm');
+  if (result.kind === 'confirm') {
+    assert.equal(result.candidates[0]?.project.name, 'lark-channel-bridge');
+    assert.equal(result.candidates.length, 2);
+  }
+});
+
+test('does not let the current bridge project suppress generic disambiguation', () => {
+  const result = resolver.resolve('看看那个 bridge 最近还有什么问题', {
+    currentPath: SAMPLE_PROJECTS[4]!.path,
+    now: NOW,
+  });
+  assert.equal(result.kind, 'confirm');
+  if (result.kind === 'confirm') {
+    assert.ok(result.candidates.length >= 2);
+  }
+});
+
 test('deduplicates logical project copies before limiting candidates', () => {
   const duplicateA = { ...SAMPLE_PROJECTS[4]!, path: 'D:/copies/bridge-a', identityKey: 'repository:https://example.test/bridge' };
   const duplicateB = { ...SAMPLE_PROJECTS[4]!, path: 'D:/copies/bridge-b', identityKey: 'repository:https://example.test/bridge' };
