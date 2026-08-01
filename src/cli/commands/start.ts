@@ -72,13 +72,26 @@ dns.setDefaultResultOrder('ipv4first');
 // its enclosing scope returned), the rejection bubbles to here. Log and
 // keep the bot alive — losing a single reply is better than crashing.
 process.on('unhandledRejection', (reason) => {
+  if (isBrokenPipe(reason)) return;
   log.fail('process', reason, { kind: 'unhandledRejection' });
   reportError(reason, { kind: 'unhandledRejection' });
 });
 process.on('uncaughtException', (err) => {
+  if (isBrokenPipe(err)) {
+    process.exit(0);
+  }
   log.fail('process', err, { kind: 'uncaughtException' });
   reportError(err, { kind: 'uncaughtException' });
 });
+
+function isBrokenPipe(error: unknown): boolean {
+  return Boolean(
+    error &&
+      typeof error === 'object' &&
+      'code' in error &&
+      (error as { code?: unknown }).code === 'EPIPE',
+  );
+}
 
 const MEDIA_GC_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
@@ -144,7 +157,11 @@ async function runClassic(opts: StartOptions): Promise<void> {
   });
   await gcOldLogs();
 
-  const supervisor = new Supervisor({ configPath, rootDir: appPaths.rootDir });
+  const supervisor = new Supervisor({
+    configPath,
+    rootDir: appPaths.rootDir,
+    runPreflight: opts.skipCheckLarkCli ? false : undefined,
+  });
 
   // Retry loop: on a profile/app runtime-lock conflict, offer to stop the
   // holder and try again (same UX as older single-profile `run`).
@@ -203,7 +220,11 @@ async function runSupervisorConsole(opts: StartOptions): Promise<void> {
   });
   await gcOldLogs();
 
-  const supervisor = new Supervisor({ configPath, rootDir: appPaths.rootDir });
+  const supervisor = new Supervisor({
+    configPath,
+    rootDir: appPaths.rootDir,
+    runPreflight: opts.skipCheckLarkCli ? false : undefined,
+  });
 
   // Single web console (host sidecar), backed by the supervisor.
   let uiServer: UiServerHandle | undefined;
