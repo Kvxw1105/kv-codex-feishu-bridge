@@ -115,6 +115,7 @@ export function renderCandidatePrompt(candidates: readonly ResolutionCandidate[]
     lines.push(
       `**${index + 1}. ${candidate.project.name}**`,
       summary ? summary.slice(0, 120) : candidate.project.path,
+      `位置：\`${candidate.project.path}\``,
       '',
     );
   });

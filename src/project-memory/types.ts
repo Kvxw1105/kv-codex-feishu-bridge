@@ -1,5 +1,7 @@
 export interface ProjectRecord {
   id: string;
+  /** Stable logical identity shared by worktrees/checkouts of one project. */
+  identityKey?: string;
   name: string;
   path: string;
   description: string;

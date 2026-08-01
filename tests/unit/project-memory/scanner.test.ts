@@ -11,12 +11,16 @@ async function makeProject(
   name: string,
   description: string,
   readme: string,
+  remote?: string,
 ): Promise<string> {
   const path = join(root, directory);
   await mkdir(join(path, '.git'), { recursive: true });
   await writeFile(join(path, '.git', 'HEAD'), 'ref: refs/heads/main\n');
   await writeFile(join(path, 'package.json'), JSON.stringify({ name, description }, null, 2));
   await writeFile(join(path, 'README.md'), readme);
+  if (remote) {
+    await writeFile(join(path, '.git', 'config'), `[remote "origin"]\n\turl = ${remote}\n`);
+  }
   return path;
 }
 
@@ -56,4 +60,14 @@ test('respects an explicit project limit', async () => {
 
   const projects = await scanProjectRoots([root], { maxProjects: 1 });
   assert.equal(projects.length, 1);
+});
+
+test('collapses worktree copies that share a Git remote', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'project-memory-identity-'));
+  await makeProject(root, 'checkout-a', 'Sample Bridge', 'same bridge', '# Sample Bridge', 'https://example.test/team/bridge.git');
+  await makeProject(root, 'checkout-b', 'Sample Bridge', 'same bridge', '# Sample Bridge', 'https://example.test/team/bridge.git');
+
+  const projects = await scanProjectRoots([root]);
+  assert.equal(projects.length, 1);
+  assert.equal(projects[0]?.identityKey, 'repository:https://example.test/team/bridge');
 });

@@ -1,7 +1,8 @@
 import { createHash } from 'node:crypto';
 import { readdir, readFile, stat } from 'node:fs/promises';
-import { basename, join, resolve } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import type { ProjectRecord } from './types';
+import { contentIdentityKey, projectIdentityKey } from './identity';
 import { normalizeText, tokenize } from './tokenize';
 
 const PROJECT_MARKERS = [
@@ -54,7 +55,7 @@ export async function scanProjectRoots(
     await visit(root, 0);
   }
 
-  return [...found.values()].sort((a, b) => b.lastActiveAt - a.lastActiveAt);
+  return collapseProjects([...found.values()]);
 
   async function visit(dir: string, depth: number): Promise<void> {
     if (depth > maxDepth || found.size >= maxProjects) return;
@@ -107,9 +108,13 @@ async function buildProjectRecord(
   ]).filter((value) => value.length >= 2);
   const lastActiveAt = await detectLastActiveAt(projectPath);
   const updatedAt = Date.now();
+  const repositoryIdentity = await detectRepositoryIdentity(projectPath);
 
   return {
     id: createHash('sha256').update(normalizePathKey(projectPath)).digest('hex').slice(0, 16),
+    identityKey: repositoryIdentity
+      ? `repository:${repositoryIdentity}`
+      : contentIdentityKey(name, description),
     name,
     path: resolve(projectPath),
     description,
@@ -119,6 +124,72 @@ async function buildProjectRecord(
     lastActiveAt,
     updatedAt,
   };
+}
+
+function collapseProjects(projects: readonly ProjectRecord[]): ProjectRecord[] {
+  const groups = new Map<string, ProjectRecord>();
+  for (const project of [...projects].sort((a, b) => b.lastActiveAt - a.lastActiveAt)) {
+    const key = projectIdentityKey(project);
+    const existing = groups.get(key);
+    if (!existing) {
+      groups.set(key, project);
+      continue;
+    }
+
+    const preferred = project.lastActiveAt > existing.lastActiveAt ? project : existing;
+    const other = preferred === project ? existing : project;
+    groups.set(key, {
+      ...preferred,
+      aliases: unique([...preferred.aliases, ...other.aliases]),
+      lastActiveAt: Math.max(preferred.lastActiveAt, other.lastActiveAt),
+      updatedAt: Math.max(preferred.updatedAt, other.updatedAt),
+    });
+  }
+  return [...groups.values()].sort((a, b) => b.lastActiveAt - a.lastActiveAt);
+}
+
+async function detectRepositoryIdentity(projectPath: string): Promise<string | undefined> {
+  const gitPath = join(projectPath, '.git');
+  let gitDir = gitPath;
+  try {
+    const marker = await readFile(gitPath, 'utf8');
+    const match = marker.match(/^\s*gitdir:\s*(.+?)\s*$/im);
+    if (match?.[1]) gitDir = resolve(projectPath, match[1]);
+  } catch {
+    // A normal checkout has a .git directory, which is not readable as text.
+  }
+
+  const configPaths = [join(gitDir, 'config')];
+  try {
+    const commonDir = (await readFile(join(gitDir, 'commondir'), 'utf8')).trim();
+    if (commonDir) configPaths.unshift(join(resolve(gitDir, commonDir), 'config'));
+  } catch {
+    // Ordinary repositories do not have a commondir file.
+  }
+  if (normalizePathKey(gitDir).includes('/.git/worktrees/')) {
+    configPaths.unshift(join(dirname(dirname(gitDir)), 'config'));
+  }
+
+  for (const configPath of unique(configPaths)) {
+    try {
+      const config = await readFile(configPath, 'utf8');
+      const remote = config.match(/^\s*url\s*=\s*(\S+)\s*$/im)?.[1];
+      if (remote) return normalizeRemote(remote);
+    } catch {
+      // Continue through alternate worktree/common git config paths.
+    }
+  }
+  return undefined;
+}
+
+function normalizeRemote(remote: string): string {
+  return remote
+    .trim()
+    .toLowerCase()
+    .replace(/^git@([^:]+):/, 'https://$1/')
+    .replace(/^ssh:\/\/git@/, 'https://')
+    .replace(/\.git$/, '')
+    .replace(/\/+$/, '');
 }
 
 function rankKeywords(text: string, limit: number): string[] {

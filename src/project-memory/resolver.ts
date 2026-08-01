@@ -4,6 +4,7 @@ import type {
   ResolutionCandidate,
   ResolutionContext,
 } from './types';
+import { projectIdentityKey } from './identity';
 import { normalizeText, overlapCount, tokenize } from './tokenize';
 
 const PROJECT_REFERENCE = /(那个|这个|上次|之前|昨天|前天|前几天|最近|刚才|项目|软件|工具|网站|应用|系统|仓库|bridge|助手|做.+的)/i;
@@ -66,9 +67,11 @@ export class ProjectResolver {
       };
     }
 
-    const candidates = projects
-      .map((project) => scoreProject(project, normalizedQuery, queryTokens, context))
-      .filter((candidate) => candidate.score > 0)
+    const candidates = dedupeCandidates(
+      projects
+        .map((project) => scoreProject(project, normalizedQuery, queryTokens, context))
+        .filter((candidate) => candidate.score > 0),
+    )
       .sort((a, b) => b.score - a.score || b.project.lastActiveAt - a.project.lastActiveAt)
       .slice(0, this.maxCandidates);
 
@@ -133,6 +136,18 @@ export class ProjectResolver {
 
     return { kind: 'none', candidates, reason: 'evidence is below confirmation threshold' };
   }
+}
+
+function dedupeCandidates(candidates: readonly ResolutionCandidate[]): ResolutionCandidate[] {
+  const unique = new Map<string, ResolutionCandidate>();
+  for (const candidate of candidates) {
+    const key = projectIdentityKey(candidate.project);
+    const existing = unique.get(key);
+    if (!existing || candidate.score > existing.score || candidate.project.lastActiveAt > existing.project.lastActiveAt) {
+      unique.set(key, candidate);
+    }
+  }
+  return [...unique.values()];
 }
 
 function scoreProject(

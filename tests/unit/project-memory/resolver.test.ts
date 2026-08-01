@@ -51,6 +51,24 @@ test('asks for confirmation when bridge wording is ambiguous', () => {
   }
 });
 
+test('deduplicates logical project copies before limiting candidates', () => {
+  const duplicateA = { ...SAMPLE_PROJECTS[4]!, path: 'D:/copies/bridge-a', identityKey: 'repository:https://example.test/bridge' };
+  const duplicateB = { ...SAMPLE_PROJECTS[4]!, path: 'D:/copies/bridge-b', identityKey: 'repository:https://example.test/bridge' };
+  const resolverWithCopies = new ProjectResolver(() => [duplicateA, duplicateB, SAMPLE_PROJECTS[3]!, SAMPLE_PROJECTS[4]!], {
+    autoThreshold: 40,
+    confirmThreshold: 18,
+    autoMargin: 12,
+    maxCandidates: 3,
+  });
+
+  const result = resolverWithCopies.resolve('看看那个 bridge 最近还有什么问题', { now: NOW });
+  assert.equal(result.kind, 'confirm');
+  if (result.kind === 'confirm') {
+    assert.equal(new Set(result.candidates.map((candidate) => projectIdentity(candidate))).size, result.candidates.length);
+    assert.ok(result.candidates.some((candidate) => candidate.project.name === 'Sample Browser Bridge'));
+  }
+});
+
 test('slash commands never trigger a project switch', () => {
   const result = resolver.resolve('/status', {
     currentPath: `${FIXTURE_ROOT_FOR_TEST}/video-forge`,
@@ -61,3 +79,7 @@ test('slash commands never trigger a project switch', () => {
 });
 
 const FIXTURE_ROOT_FOR_TEST = 'D:/fixture-workspaces';
+
+function projectIdentity(candidate: { project: { identityKey?: string; name: string; description: string } }): string {
+  return candidate.project.identityKey ?? `${candidate.project.name}:${candidate.project.description}`;
+}
